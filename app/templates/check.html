@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block body %}
+<link href="/static/check.css" rel="stylesheet">
+<div class="kpis">
+  <div class="kpi"><span>样品总数</span><b id="k-total">{{check_view.summary.total}}</b></div>
+  <div class="kpi"><span>受保护可放行</span><b class="ok" id="k-protected">{{check_view.summary.protected}}</b></div>
+  <div class="kpi"><span>等待证据</span><b class="warn" id="k-waiting">{{check_view.summary.waiting}}</b></div>
+  <div class="kpi"><span>复测在办</span><b class="warn" id="k-retest">{{check_view.summary.retest_open}}</b></div>
+  <div class="kpi"><span>核查记录</span><b id="k-checks">{{check_view.checks|length}}</b></div>
+</div>
+
+<div class="stagebar">
+  {% for m in modules %}
+  <a href="/module/{{loop.index}}?run_id={{run.id}}" class="{{'at' if loop.index==active else ''}}"><b>{{loop.index}}</b><span>{{m}}</span></a>
+  {% endfor %}
+</div>
+
+<div id="check-app" data-id="{{check_view.id}}">
+  <div class="check-toolbar">
+    <span class="muted">批次 {{check_view.batch}} · rev {{check_view.revision}}</span>
+    <a class="btn" href="/api/check/batches/{{check_view.id}}/export">下载核查证据CSV</a>
+  </div>
+  <section class="panel check-panel">
+    <div class="panel-head"><h2>分段保护视图</h2><span>每段标注其保护核查</span></div>
+    <div class="segments" id="segments">
+      {% for seg in check_view.segments %}
+      <article class="seg {{'seg-ok' if seg.protected else 'seg-bad'}}">
+        <header><b>第{{seg.segment+1}}段</b>
+          <span class="seg-guard">
+            {% if seg.guard_check %}核查 {{seg.guard_check}} · {{seg.guard_result}}{% else %}无合格核查{% endif %}
+          </span>
+          <span class="seg-range">序列 {{seg.start_seq}}–{{seg.end_seq}}</span>
+        </header>
+        <p class="seg-state">{{seg.status_text}}{% if seg.waiting %} · <em>{{seg.waiting}} 份等待证据</em>{% endif %}</p>
+        <div class="seg-samples">
+          {% for sid in seg.sample_ids %}<span class="chip">{{sid}}</span>{% endfor %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="check-grid">
+    <section class="panel">
+      <div class="panel-head"><h2>样品放行清单（逐样追溯保护核查）</h2><span>{{check_view.samples|length}} 份</span></div>
+      <div class="scroll">
+        <table class="ledger" id="sample-table">
+          <thead><tr><th>样品</th><th>检测批</th><th>检测项</th><th>序列</th><th>浓度</th><th>保护核查</th><th>状态</th><th>证据</th></tr></thead>
+          <tbody>
+            {% for s in check_view.samples %}
+            <tr class="row-{{s.status}}">
+              <td>{{s.sample_id}}</td><td>{{s.batch}}</td><td>{{s.analyte}}</td>
+              <td class="num">{{s.seq}}</td><td class="num">{{s.value}}</td>
+              <td>{% if s.protecting_check %}<code>{{s.protecting_check}}</code>{% else %}<span class="muted">—</span>{% endif %}</td>
+              <td><span class="badge badge-{{s.status}}">{{check_view.status_text[s.status]}}</span></td>
+              <td>{% if s.released %}放行 rev{{s.release_revision}}{% else %}<em class="warn">等待证据</em>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel side">
+      <div class="panel-head"><h2>核查台账（只追加）</h2><span>{{check_view.checks|length}} 条</span></div>
+      <ul class="ledger-list" id="check-ledger">
+        {% for c in check_view.checks %}
+        <li class="{{'pass' if c.result=='PASS' else 'fail'}}">
+          <code>{{c.check_id}}</code><b>{{c.result}}</b><span>序列{{c.seq}} · {{c.source}}</span>
+        </li>
+        {% endfor %}
+      </ul>
+
+      <div class="panel-head"><h2>补入核查 / 复测证据</h2><span>仅重判其后样品</span></div>
+      <form id="add-check-form" class="check-form">
+        <label>核查编号<input name="check_id" required placeholder="如 C2"></label>
+        <label>序列位置<input name="seq" type="number" placeholder="默认追加到队尾"></label>
+        <label>结论
+          <select name="result"><option value="PASS">PASS 合格</option><option value="FAIL">FAIL 漂移</option></select>
+        </label>
+        <label>读数<input name="value" placeholder="如 0.0031"></label>
+        <button class="btn yellow" type="submit">补入并重判</button>
+        <output id="check-notice" role="status"></output>
+      </form>
+
+      <div class="panel-head"><h2>复测任务</h2><span id="task-count">{{check_view.tasks|length}} 项</span></div>
+      <ul class="task-list" id="task-list">
+        {% for t in check_view.tasks %}
+        <li class="task-{{t.status}}"><b>{{t.sample_id}}</b><span>{{t.analyte}} · 序列{{t.from_seq}}</span>
+          <em class="tag-{{t.status}}">{{'在办' if t.status=='OPEN' else '已覆盖·'+t.closed_check}}</em></li>
+        {% else %}<li class="muted">暂无复测任务。</li>{% endfor %}
+      </ul>
+    </section>
+  </div>
+</div>
+<script src="/static/check.js" defer></script>
+{% endblock %}

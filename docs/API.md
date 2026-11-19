@@ -8,4 +8,11 @@
 
 `GET /api/export/{id}`：唯一证据CSV。`GET /health`：存活检查。
 
+M8 核查保护放行（独立状态，SQLite 独立表）：
+- `POST /api/check/batches`：{"text":"仪器序列CSV"}，幂等创建并返回分段保护视图。
+- `GET /api/check/batches`：核查批次历史。`GET /api/check/batches/{id}`：单批视图。
+- `POST /api/check/batches/{id}/checks`：补入核查 {check_id,seq?,result,value?}；编号重复 409，合格核查仅重判其后尚未覆盖样品。
+- `GET /api/check/batches/{id}/export`：核查证据CSV（台账+放行绑定+复测任务）。
+- 页面：`GET /module/8`。
+
 错误：结构/数值422，版本冲突409，不存在404，文件过大413。逐行异常进入quarantine。

@@ -1,0 +1,11 @@
+seq,batch,sample_id,analyte,kind,check_id,result,value
+1,B09,,Pb,check,C0,PASS,0.0030
+2,B09,S01,Pb,sample,,,0.0031
+3,B09,S02,Pb,sample,,,0.0029
+4,B09,S03,Pb,sample,,,0.0032
+5,B09,S04,Pb,sample,,,0.0030
+6,B09,,Pb,check,C1,FAIL,0.0061
+7,B09,S05,Pb,sample,,,0.0048
+8,B09,S06,Pb,sample,,,0.0051
+9,B09,S07,Pb,sample,,,0.0049
+10,B09,S08,Pb,sample,,,0.0052

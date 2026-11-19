@@ -7,3 +7,8 @@ from app.pipeline import run,sample_text
 def sample(): return sample_text()
 @pytest.fixture
 def result(sample): return run(sample)
+@pytest.fixture
+def client():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    return TestClient(app)

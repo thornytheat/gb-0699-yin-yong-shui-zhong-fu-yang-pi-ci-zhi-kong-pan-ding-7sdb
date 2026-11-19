@@ -25,6 +25,7 @@ docker compose config --quiet
 - M5 空白污染：`/module/5`，独立计算 `POST /api/5`。
 - M6 批次放行：`/module/6`，独立计算 `POST /api/6`。
 - M7 复测追踪：`/module/7`，独立计算 `POST /api/7`。
+- M8 核查保护放行：`/module/8`，状态接口 `POST /api/check/batches`。仪器序列按校准核查切段，合格核查保护其后样品，漂移失保段只复测不放行；补入合格核查仅重判其后样品，台账与放行只追加。样例 `sample_data/check-sequence.csv`。
 
 ## 输入与输出
 
